@@ -41,42 +41,44 @@
 
 // s is not valid here because it’s not yet declared
 fn main() {
-    let s = "hello"; // s is valid from this point forward
-    let mut s = String::from(s); // converts string literal to a mutable string type by calling for memory on the heap through the os
-                                 // :: is an operator that allows us to namespace this particular "from" function under the string type rather than using some sort of name like string_from
-                                 // This type of string can be mutated
-    s.push_str(", world!"); // push_str() appends a literal to a String
-    println!("{}", s); // doing stuff with s while it's valid
+  let s = "hello"; // s is valid from this point forward
+  let mut s = String::from(s); // converts string literal to a mutable string type by calling for memory on the heap through the os
+                               // :: is an operator that allows us to namespace this particular "from" function under the string type rather than using some sort of name like string_from
+                               // This type of string can be mutated
+  s.push_str(", world!"); // push_str() appends a literal to a String
+  println!("{}", s); // doing stuff with s while it's valid
 
-    let x = 5; // both x and y are pushed onto the stack because they are integer values with a simple fixed known size (5: i32)
-    let y = x; // binds 5 to x and copies value of x and binds it to y
+  let x = 5; // both x and y are pushed onto the stack because they are integer values with a simple fixed known size (5: i32)
+  let y = x; // binds 5 to x and copies value of x and binds it to y
 
-    // String is made up of three parts: a pointer to the memory that holds the content of a string, a length and a capacity
-    // this group of String data is pushed to the stack but the memory that holds the actual contents is stored on the heap
-    // pointer stored on the stack for the string points to the content in the heap
-    // the length is how much memory (in bytes) the contents of the String is currently using
-    // the capacity is the total amount of memory (in bytes) that the String has received from the OS
-    let s1 = String::from("hello"); // requests allocation on the heap for a new String
-    let s2 = s1; // Content is not copied only the data pointing to the same content is copied
-                 // Pointer, length and capacity data from s1 is copied to a new variable called s2 and stores the same data as s1 on the stack
-                 // if s1 and s2 try to go out of memory at the same time it will try to free the same data and will cause a double free error
-                 // freeing memory twice can lead to memory corruption which can potentially lead to a security vulnerability
-                 // to ensure memory safety Rust considers s1 no longer valid
-                 // this isn't a shallow copy because the first variable is no longer valid (it's called a move)
-                 // it is to be said that s1 was moved to s2
-                 // since s2 is the only valid variable with the same data it is the only String that rust frees at the end of the scope
-    let s3 = s2.clone(); // if we want a deep copy (more resource expensive because it is copying contents and requesting a new spot on the stack) we can call .clone() method
-    println!("{} {} {} {}", s2, s3, x, y); // s1 is the only one that wont work because it was "moved"
-                                           // x works because integers with a fixed value and size (i32) are stored on the stack and deep copies are quick to make (doesn't invalidate x and both are dropped at the end of the scope)
-    take_ownership(s3); // s3's value moves into the function and is no longer valid here
-                        // println!("{}", s3); // this is invalid because s3 was just moved
-    make_copy(x); // x's value moves into the function but i32 is Copy so it's okay to still use x afterward
-                  // println!("{}", x); // this is valid because i32 is Copy and isn't moved
-    let s3 = take_and_give_back(s2); // s2 is moved into the function and the return value is moved into s3
-    println!("{}", s3);
-    let (s2, s3) = return_multiple_values(s3); // ownership of s3 is sent to the function and the function returns a tuple with multiple Strings that are stored on the new into new variables
-    println!("{} {}", s2, s3); // both s2 and s3 are valid now
-                               // because of this when s2 goes out of scope nothing happens (it was moved) but now s3 is dropped at the end of this scope (main owns it still)
+  // String is made up of three parts: a pointer to the memory that holds the content of a string, a length and a capacity
+  // this group of String data is pushed to the stack but the memory that holds the actual contents is stored on the heap
+  // pointer stored on the stack for the string points to the content in the heap
+  // the length is how much memory (in bytes) the contents of the String is currently using
+  // the capacity is the total amount of memory (in bytes) that the String has received from the OS
+  let s1 = String::from("hello"); // requests allocation on the heap for a new String
+  let s2 = s1; // Content is not copied only the data pointing to the same content is copied
+               // Pointer, length and capacity data from s1 is copied to a new variable called s2 and stores the same data as s1 on the stack
+               // if s1 and s2 try to go out of memory at the same time it will try to free the same data and will cause a double free error
+               // freeing memory twice can lead to memory corruption which can potentially lead to a security vulnerability
+               // to ensure memory safety Rust considers s1 no longer valid
+               // this isn't a shallow copy because the first variable is no longer valid (it's called a move)
+               // it is to be said that s1 was moved to s2
+               // since s2 is the only valid variable with the same data it is the only String that rust frees at the end of the scope
+  let s3 = s2.clone(); // if we want a deep copy (more resource expensive because it is copying contents and requesting a new spot on the stack) we can call .clone() method
+  println!("{} {} {} {}", s2, s3, x, y); // s1 is the only one that wont work because it was "moved"
+                                         // x works because integers with a fixed value and size (i32) are stored on the stack and deep copies are quick to make (doesn't invalidate x and both are dropped at the end of the scope)
+  take_ownership(s3); // s3's value moves into the function and is no longer valid here
+                      // println!("{}", s3); // this is invalid because s3 was just moved
+  make_copy(x); // x's value moves into the function but i32 is Copy so it's okay to still use x afterward
+                // println!("{}", x); // this is valid because i32 is Copy and isn't moved
+  let s3 = take_and_give_back(s2); // s2 is moved into the function and the return value is moved into s3
+  println!("{}", s3);
+  let (s2, s3) = return_multiple_values(s3); // ownership of s3 is sent to the function and the function returns a tuple with multiple Strings that are stored on the new into new variables
+  println!("{} {}", s2, s3); // both s2 and s3 are valid now
+                             // because of this when s2 goes out of scope nothing happens (it was moved) but now s3 is dropped at the end of this scope (main owns it still)
+  using_a_reference(&s2); // doesn't pass ownership to the function but rather a reference (pointer) to the String object
+                          // s2 is still valid to use
 } // now s isn't dropped because it was moved but x is still dropped
   // this scope is now over and s is no longer valid and the memory for our String type is returned to the OS
   // we know the contents of string literals at compile time so the text is hard coded directly into the final executable
@@ -99,18 +101,18 @@ fn main() {
 // Tuples, if they only contain types that are also Copy. For example, (i32, i32) is Copy, but (i32, String) is not.
 
 fn take_ownership(a_string: String) {
-    // a_string comes into scope
-    println!("{}", a_string);
+  // a_string comes into scope
+  println!("{}", a_string);
 } // a_string goes out of scope and drop is called
   // memory is then freed
 
 fn make_copy(a_int: i32) {
-    // a_int comes into scope
-    println!("{}", a_int);
+  // a_int comes into scope
+  println!("{}", a_int);
 } // a_int goes out of scope and nothing happens because ownership is restored (Copy type)
 
 fn take_and_give_back(a_string: String) -> String {
-    a_string // a_string is returned and moved out to the calling function
+  a_string // a_string is returned and moved out to the calling function
 }
 // these are examples of ownership being transferred between functions
 
@@ -119,7 +121,44 @@ fn take_and_give_back(a_string: String) -> String {
 // unless the data has been moved to be owned by another variable
 
 fn return_multiple_values(a_string: String) -> (String, String) {
-    let another_string = a_string.clone(); // deep cloned into a new string variable
-    (another_string, a_string) // returns a tuple with the new cloned string and the old string
-                               // ownership of both the new and old string are returned to the calling function
+  let another_string = a_string.clone(); // deep cloned into a new string variable
+  (another_string, a_string) // returns a tuple with the new cloned string and the old string
+                             // ownership of both the new and old string are returned to the calling function
 }
+
+// Because all of this is a pain in the ass
+// Rust has a feature called references
+// Passing a reference to a object instead of taking ownership is much more effective
+fn using_a_reference(s: &String) -> usize {
+  s.len() // the function then uses the reference to find the length of the string passed to it
+          // uses the reference to do calculations on without having actual ownership of the data
+}
+// changing "&String" to "&mut String"
+// you can only have one mutable reference to a particular piece of data in a particular scope
+// let r1 = &mut s;
+// let r2 = &mut s; // this fails
+//  let r1 = &s; // no problem
+//  let r2 = &s; // no problem
+//  let r3 = &mut s; // BIG PROBLEM
+// when a reference goes out of scope a new one can be made on the same data
+// you can't combine mutable and immutable references
+// this prevents data races:
+//  two or more pointers access the same data at the same time
+//  at least one of the pointers is being used to write to the data
+//  there's no mechanism being used to synchronize access to the data
+// references are immutable by default and you can't modify the data they point to
+// references as function arguments is known as borrowing
+// references allow you to refer to a value without taking ownership of it
+// since strings store String data to the stack a reference to the string data is a pointer to a pointer that points to content on the heap
+// The opposite of referencing by using & is dereferencing which uses *
+
+
+// can't return references to objects created inside the scope
+// the new object is dropped at the end of the scope so a reference would be to an invalid object
+// references to an object that no longer exists is known as a dangling reference
+// if you return the object instead the ownership is moved out and nothing is de-allocated
+
+// Rules of References
+//  At any given time, you can either one mutable reference or any number of immutable references
+//  References must always be valid
+
