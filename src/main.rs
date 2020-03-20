@@ -79,6 +79,18 @@ fn main() {
                              // because of this when s2 goes out of scope nothing happens (it was moved) but now s3 is dropped at the end of this scope (main owns it still)
   using_a_reference(&s2); // doesn't pass ownership to the function but rather a reference (pointer) to the String object
                           // s2 is still valid to use
+
+  let s = String::from("hello world"); // was mutable but doesn't have to be anymore with str slices
+  first_word(&s); // word will get the value 5
+                  // s.clear(); // this empties the String, making it equal to ""
+                  // word still has the value 5 here, but there's no more string that
+                  // we could meaningfully use the value 5 with. word is now totally invalid!
+                  // string slices are the solution
+                  // a string slice is a reference to part of a String
+  let hello = &s[0..5]; // String is slices from h character to space (first (0) is inclusive and last (5) is exclusive)
+  let world = &s[6..11]; // internally the slice data structure stores the starting position and length of the slice which corresponds to the ending_index minus starting_index
+                         // .. is range syntax start..end (if you leave out start or end it will start at the first index 0 to value or value to end (..2 == 0..2 && 2.. == 2..102))
+  println!("{}, {}!", hello, world);
 } // now s isn't dropped because it was moved but x is still dropped
   // this scope is now over and s is no longer valid and the memory for our String type is returned to the OS
   // we know the contents of string literals at compile time so the text is hard coded directly into the final executable
@@ -152,7 +164,6 @@ fn using_a_reference(s: &String) -> usize {
 // since strings store String data to the stack a reference to the string data is a pointer to a pointer that points to content on the heap
 // The opposite of referencing by using & is dereferencing which uses *
 
-
 // can't return references to objects created inside the scope
 // the new object is dropped at the end of the scope so a reference would be to an invalid object
 // references to an object that no longer exists is known as a dangling reference
@@ -162,3 +173,56 @@ fn using_a_reference(s: &String) -> usize {
 //  At any given time, you can either one mutable reference or any number of immutable references
 //  References must always be valid
 
+// Slices let you reference a contiguous sequence of elements in a collection rather than the whole collection
+//
+//// fn first_word(s: &String) -> usize {
+// convert string to bytes to parse through bytes and find a space
+////let bytes = s.as_bytes();
+
+// loop through iterator created with iter for "bytes"
+// iter is a method that returns each element in a collection
+// enumerate wraps the results of iter and returns each element as a part of a tuple instead
+// first return value from enumerate is the index
+// second return value in the tuple from enumerate is a reference to the element
+// i is the current index out of the bytes collection
+// &item is a reference to the current item
+// (i, &item) is an example of destructing a tuple from the return of enumerate
+////for (i, &item) in bytes.iter().enumerate() {
+////if item == b' ' {
+// if the item is a space (in bytes) then return the current index
+////return i;
+////}
+////}
+
+// otherwise return the length of the string by using len() method
+////s.len()
+////}
+// removed code that was replaced by better string slice methods
+fn first_word(s: &str) -> &str {
+  // &str instead of &String allows us to work with string slices and &Strings
+  // if we have a String we can pass a slice of the entire String (&String[..])
+  // this makes our function more general and accessible without losing any functionality
+  // converts reference string to parsable bytes
+  let bytes = s.as_bytes();
+
+  // parses through bytes with enumerate and iter
+  for (i, &item) in bytes.iter().enumerate() {
+    // if the reference to the element passed from enumerate is a space
+    if item == b' ' {
+      // then return a reference from the start of the string to wherever the index is
+      return &s[..i];
+    }
+  }
+  &s[..] // returns a reference to a string slice
+  // this return reference is tied to underlying data (directly correlates with the string passed into the function)
+  // string slice points to a part of the actual string location with a length of how long the slice is
+  // with slices if data is cleared it will through a compiler error
+}
+// string literals are string slices
+// it's a slice pointing to that specific point of the binary
+// also why string literals are immutable (&str is an immutable reference)
+
+// other slices include slices of arrays
+// let a = [1, 2, 3, 4, 5]
+// &a[1..3] <-- this is a slice as well but not a string slice
+// works in the same way as a string but is for more general data types such as collections
